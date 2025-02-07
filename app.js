@@ -1,22 +1,29 @@
 const terminal = document.getElementById("terminal");
 const username = "user";
 const hostname = "presentation-pc";
-let mode = null;
+let mode = null; // 'auto' или 'manual'
 let currentSlide = 0;
-let slides = ["slide1.png", "slide2.png", "slide3.png"];
+const slides = ["slide1.png", "slide2.png", "slide3.png"];
 
-// Функция вывода текста в терминале
-function print(text, newLine = true) {
-    terminal.innerHTML += text + (newLine ? "\n" : "");
+/** Функция для автоматической прокрутки терминала до самого низа */
+function scrollToBottom() {
     terminal.scrollTop = terminal.scrollHeight;
 }
 
-// Имитация командной строки Linux
+/** Функция для вывода текста в терминале.
+ *  Каждый вызов добавляет строку в конец и вызывает scrollToBottom().
+ */
+function print(text, newLine = true) {
+    terminal.innerHTML += text + (newLine ? "\n" : "");
+    scrollToBottom();
+}
+
+/** Формирует приглашение (prompt) как в Linux */
 function getPrompt() {
     return `<span style="color:#6A9FB5">${username}@${hostname}</span>:<span style="color:#B5BD68">~</span>$ `;
 }
 
-// Запрос режима
+/** Запрос начальной команды (выбор режима) */
 function askMode() {
     print(getPrompt(), false);
     const input = document.createElement("input");
@@ -28,8 +35,7 @@ function askMode() {
         if (e.key === "Enter") {
             const command = input.value.trim();
             input.remove();
-            print(command);
-
+            print(command); // выводим введённую команду на той же строке
             if (command === "pres --auto") {
                 mode = "auto";
                 startBuildProcess();
@@ -44,7 +50,7 @@ function askMode() {
     });
 }
 
-// Симуляция команд сборки
+/** Имитация сборки (вывод команд cmake) */
 function startBuildProcess() {
     print(getPrompt() + "cmake -S llvm -B release/build -G Ninja -C release.cmake");
     setTimeout(() => {
@@ -55,6 +61,8 @@ function startBuildProcess() {
                 print("Build completed successfully!\n");
                 if (mode === "auto") {
                     loadSlide();
+                    // В авто-режиме ждём правого клика для перехода к следующему слайду
+                    document.addEventListener("contextmenu", autoNextSlide);
                 } else {
                     enableManualMode();
                 }
@@ -63,56 +71,49 @@ function startBuildProcess() {
     }, 1000);
 }
 
-// Очистка старых команд при загрузке нового слайда
-function clearOldCommands() {
-    const lines = terminal.innerHTML.split("\n");
-    if (lines.length > 1) {
-        terminal.innerHTML = lines.slice(-1).join("\n");
-    }
-}
-
-// Загрузка слайда
+/** Функция для вывода слайда.
+ *  Сначала выводится строка с командой, затем – слайд (изображение).
+ */
 function loadSlide() {
     if (currentSlide >= slides.length) {
-        print("🎉 Presentation finished!");
+        print("Presentation finished!");
         return;
     }
-
+    // Выводим команду для отображения слайда
     print(getPrompt() + `cat slides/${slides[currentSlide]}`);
 
-    // Очищаем старые команды
-    clearOldCommands();
-
-    // Удаляем предыдущие изображения, если они есть
-    const oldSlide = document.querySelector(".slide-container");
-    if (oldSlide) oldSlide.remove();
-
-    // Создаём контейнер для изображения
+    // Создаём контейнер для слайда (изображения)
     const slideContainer = document.createElement("div");
     slideContainer.classList.add("slide-container");
-
     const img = document.createElement("img");
     img.src = `slides/${slides[currentSlide]}`;
     img.alt = `Slide ${currentSlide + 1}`;
-
     slideContainer.appendChild(img);
+
+    // Добавляем слайд в конец терминала
     terminal.appendChild(slideContainer);
 
-    if (mode === "auto") {
-        document.addEventListener("contextmenu", (e) => {
-            e.preventDefault();
-            nextSlide();
-        });
-    }
+    scrollToBottom();
 }
 
-// Переключение слайда
-function nextSlide() {
-    currentSlide++;
-    loadSlide();
+/** Обработчик правого клика для авто-режима:
+ *  При ПКМ выводится новая строка (появляется команда), которая «выталкивает» слайд вверх.
+ *  После чего вызывается следующий слайд.
+ */
+function autoNextSlide(e) {
+    e.preventDefault();
+    // Сначала выводим новую строку ввода (как будто появляется команда для следующего слайда)
+    print(getPrompt());
+    // Затем, немного спустя, вызываем следующий слайд
+    setTimeout(() => {
+        currentSlide++;
+        loadSlide();
+    }, 300);
 }
 
-// Включение режима `manual`
+/** Ручной режим: вывод строки ввода для новых команд.
+ *  Каждая новая команда добавляется в конец терминала, сдвигая старый вывод вверх.
+ */
 function enableManualMode() {
     print(getPrompt(), false);
     const input = document.createElement("input");
@@ -125,9 +126,8 @@ function enableManualMode() {
             const command = input.value.trim();
             input.remove();
             print(command);
-
             if (command === "pres --help") {
-                print("Available commands:");
+                print("🔹 Available commands:");
                 print("  - pres --goto slideX (go to slide X)");
                 print("  - pres --exit (exit presentation)");
             } else if (command.startsWith("pres --goto")) {
@@ -140,14 +140,16 @@ function enableManualMode() {
                 }
             } else if (command === "pres --exit") {
                 print("Exiting...");
+                return;
             } else {
                 print("bash: command not found: " + command);
             }
-
+            // После новой команды снова выводим приглашение,
+            // при этом предыдущие строки (в том числе слайд) остаются выше и прокручиваются.
             enableManualMode();
         }
     });
 }
 
-// Запуск программы
+// Запускаем программу
 askMode();
