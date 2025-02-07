@@ -8,6 +8,7 @@ let slides = ["slide1.png", "slide2.png", "slide3.png"];
 // Функция вывода текста в терминале
 function print(text, newLine = true) {
     terminal.innerHTML += text + (newLine ? "\n" : "");
+    terminal.scrollTop = terminal.scrollHeight;
 }
 
 // Имитация командной строки Linux
@@ -19,6 +20,7 @@ function getPrompt() {
 function askMode() {
     print(getPrompt(), false);
     const input = document.createElement("input");
+    input.spellcheck = false;
     terminal.appendChild(input);
     input.focus();
 
@@ -26,6 +28,7 @@ function askMode() {
         if (e.key === "Enter") {
             const command = input.value.trim();
             input.remove();
+            print(command);
 
             if (command === "pres --auto") {
                 mode = "auto";
@@ -69,6 +72,10 @@ function loadSlide() {
 
     print(getPrompt() + `cat slides/${slides[currentSlide]}`);
 
+    // Удаляем предыдущие изображения, если они есть
+    const oldSlide = document.querySelector(".slide-container");
+    if (oldSlide) oldSlide.remove();
+
     // Создаём контейнер для изображения
     const slideContainer = document.createElement("div");
     slideContainer.classList.add("slide-container");
@@ -98,6 +105,7 @@ function nextSlide() {
 function enableManualMode() {
     print(getPrompt(), false);
     const input = document.createElement("input");
+    input.spellcheck = false;
     terminal.appendChild(input);
     input.focus();
 
@@ -105,6 +113,7 @@ function enableManualMode() {
         if (e.key === "Enter") {
             const command = input.value.trim();
             input.remove();
+            print(command);
 
             if (command === "pres --help") {
                 print("Available commands:");
