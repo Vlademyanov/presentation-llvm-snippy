@@ -1,0 +1,23 @@
+body {
+    background-color: #000;
+    color: #0f0;
+    font-family: monospace;
+    margin: 0;
+    padding: 20px;
+}
+
+#terminal {
+    white-space: pre-wrap;
+    min-height: 60vh;
+    margin-bottom: 20px;
+}
+
+#input {
+    background-color: #000;
+    color: #0f0;
+    border: 1px solid #0f0;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    font-family: monospace;
+}
