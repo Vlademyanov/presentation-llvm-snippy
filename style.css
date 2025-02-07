@@ -1,19 +1,21 @@
 body {
-    background-color: black;
-    color: lime;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
     font-family: monospace;
     padding: 20px;
 }
 
 #terminal {
     white-space: pre-line;
-    font-size: 18px;
+    font-size: 16px;
+    line-height: 1.4;
 }
 
 input {
-    background: black;
-    color: lime;
+    background: none;
+    color: inherit;
     border: none;
-    font-size: 18px;
+    font-size: 16px;
     width: 100%;
+    outline: none;
 }

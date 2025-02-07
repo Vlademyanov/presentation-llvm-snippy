@@ -1,16 +1,23 @@
 const terminal = document.getElementById("terminal");
+const username = "user";
+const hostname = "presentation-pc";
 let mode = null;
 let currentSlide = 0;
 let slides = ["slide1.js", "slide2.js", "slide3.js"];
 
-// Функция для вывода текста в терминале
-function print(text) {
-    terminal.innerHTML += text + "\n";
+// Функция вывода текста в терминале
+function print(text, newLine = true) {
+    terminal.innerHTML += text + (newLine ? "\n" : "");
 }
 
-// Запрос режима у пользователя
+// Имитация командной строки Linux
+function getPrompt() {
+    return `<span style="color:#6A9FB5">${username}@${hostname}</span>:<span style="color:#B5BD68">~</span>$ `;
+}
+
+// Запрос режима
 function askMode() {
-    print("> Введите команду: pres --auto или pres --manual");
+    print(getPrompt(), false);
     const input = document.createElement("input");
     terminal.appendChild(input);
     input.focus();
@@ -27,7 +34,7 @@ function askMode() {
                 mode = "manual";
                 startBuildProcess();
             } else {
-                print("❌ Ошибка: Неизвестная команда.");
+                print("bash: command not found: " + command);
                 askMode();
             }
         }
@@ -36,13 +43,13 @@ function askMode() {
 
 // Симуляция команд сборки
 function startBuildProcess() {
-    print("> cmake -S llvm -B release/build -G Ninja -C release.cmake");
+    print(getPrompt() + "cmake -S llvm -B release/build -G Ninja -C release.cmake");
     setTimeout(() => {
-        print("> cmake --build release/build");
+        print(getPrompt() + "cmake --build release/build");
         setTimeout(() => {
-            print("> cmake --install release/build");
+            print(getPrompt() + "cmake --install release/build");
             setTimeout(() => {
-                print("✅ Сборка завершена!");
+                print("Build completed successfully!\n");
                 if (mode === "auto") {
                     loadSlide();
                 } else {
@@ -53,16 +60,16 @@ function startBuildProcess() {
     }, 1000);
 }
 
-// Загрузка слайдов
+// Загрузка ASCII-слайда
 function loadSlide() {
     if (currentSlide >= slides.length) {
-        print("🎉 Презентация завершена!");
+        print("🎉 Presentation finished!");
         return;
     }
 
-    print(`📄 Загрузка слайда ${currentSlide + 1}`);
+    print(getPrompt() + `cat slides/${slides[currentSlide]}`);
     import (`./slides/${slides[currentSlide]}`).then((module) => {
-        module.renderSlide();
+        print(module.renderSlide());
     });
 
     if (mode === "auto") {
@@ -81,7 +88,7 @@ function nextSlide() {
 
 // Включение режима `manual`
 function enableManualMode() {
-    print("> Введите `pres --help` для списка команд");
+    print(getPrompt(), false);
     const input = document.createElement("input");
     terminal.appendChild(input);
     input.focus();
@@ -92,21 +99,21 @@ function enableManualMode() {
             input.remove();
 
             if (command === "pres --help") {
-                print("🔹 Доступные команды:");
-                print("  - pres --goto slideX (перейти к слайду X)");
-                print("  - pres --exit (выйти из презентации)");
+                print("🔹 Available commands:");
+                print("  - pres --goto slideX (go to slide X)");
+                print("  - pres --exit (exit presentation)");
             } else if (command.startsWith("pres --goto")) {
                 let slideNum = parseInt(command.split(" ")[1].replace("slide", ""));
                 if (!isNaN(slideNum) && slideNum > 0 && slideNum <= slides.length) {
                     currentSlide = slideNum - 1;
                     loadSlide();
                 } else {
-                    print("❌ Ошибка: Неверный номер слайда.");
+                    print("Error: Invalid slide number.");
                 }
             } else if (command === "pres --exit") {
-                print("👋 Завершение...");
+                print("👋 Exiting...");
             } else {
-                print("❌ Ошибка: Неизвестная команда.");
+                print("bash: command not found: " + command);
             }
 
             enableManualMode();
