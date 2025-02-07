@@ -63,14 +63,25 @@ function startBuildProcess() {
     }, 1000);
 }
 
+// Очистка старых команд при загрузке нового слайда
+function clearOldCommands() {
+    const lines = terminal.innerHTML.split("\n");
+    if (lines.length > 1) {
+        terminal.innerHTML = lines.slice(-1).join("\n");
+    }
+}
+
 // Загрузка слайда
 function loadSlide() {
     if (currentSlide >= slides.length) {
-        print("Presentation finished!");
+        print("🎉 Presentation finished!");
         return;
     }
 
     print(getPrompt() + `cat slides/${slides[currentSlide]}`);
+
+    // Очищаем старые команды
+    clearOldCommands();
 
     // Удаляем предыдущие изображения, если они есть
     const oldSlide = document.querySelector(".slide-container");
