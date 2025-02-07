@@ -3,7 +3,7 @@ const username = "user";
 const hostname = "presentation-pc";
 let mode = null; // 'auto' или 'manual'
 let currentSlide = 0;
-const slides = ["slide1.png", "slide2.png", "slide3.png"];
+const slides = ["slide1.png", "slide2.png", "slide3.png", "slide4.png", "slide5.png", "slide6.png", "slide7.png"];
 
 /** Функция для автоматической прокрутки терминала до самого низа */
 function scrollToBottom() {
@@ -92,8 +92,12 @@ function loadSlide() {
 
     // Добавляем слайд в конец терминала
     terminal.appendChild(slideContainer);
-
     scrollToBottom();
+
+    if (mode === "auto") {
+        document.addEventListener("contextmenu", autoNextSlide);
+        document.addEventListener("touchend", autoNextSlide);
+    }
 }
 
 /** Обработчик правого клика для авто-режима:
@@ -102,15 +106,15 @@ function loadSlide() {
  */
 function autoNextSlide(e) {
     e.preventDefault();
-    // Сначала выводим новую строку ввода (как будто появляется команда для следующего слайда)
+    document.removeEventListener("contextmenu", autoNextSlide);
+    document.removeEventListener("touchend", autoNextSlide);
+
     print(getPrompt());
-    // Затем, немного спустя, вызываем следующий слайд
     setTimeout(() => {
         currentSlide++;
         loadSlide();
     }, 300);
 }
-
 /** Ручной режим: вывод строки ввода для новых команд.
  *  Каждая новая команда добавляется в конец терминала, сдвигая старый вывод вверх.
  */
