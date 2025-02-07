@@ -1,23 +1,19 @@
 body {
-    background-color: #000;
-    color: #0f0;
+    background-color: black;
+    color: lime;
     font-family: monospace;
-    margin: 0;
     padding: 20px;
 }
 
 #terminal {
-    white-space: pre-wrap;
-    min-height: 60vh;
-    margin-bottom: 20px;
+    white-space: pre-line;
+    font-size: 18px;
 }
 
-#input {
-    background-color: #000;
-    color: #0f0;
-    border: 1px solid #0f0;
+input {
+    background: black;
+    color: lime;
+    border: none;
+    font-size: 18px;
     width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    font-family: monospace;
 }

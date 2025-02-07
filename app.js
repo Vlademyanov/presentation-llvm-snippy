@@ -1,113 +1,118 @@
-import { showSlide as showSlide1 } from './slides/slide1.js';
-import { showSlide as showSlide2 } from './slides/slide2.js';
+const terminal = document.getElementById("terminal");
+let mode = null;
+let currentSlide = 0;
+let slides = ["slide1.js", "slide2.js", "slide3.js"];
 
-const terminal = document.getElementById('terminal');
-const inputField = document.getElementById('input');
-
-let stage = 0; // 0 - ожидаем CMake, 1 - ждём build, 2 - ждём install, 3 - режим презентации
-let presentationMode = null;
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+// Функция для вывода текста в терминале
+function print(text) {
+    terminal.innerHTML += text + "\n";
 }
 
-async function runAutoSequence() {
-    const lines = [
-        "Compiling slide1.cpp...",
-        "Compiling slide2.cpp...",
-        "Linking executable...",
-        "Optimizing assets...",
-        "Build successful!",
-        "",
-        "Installing...",
-        "Installation complete!",
-        "",
-        "Запуск презентации..."
-    ];
+// Запрос режима у пользователя
+function askMode() {
+    print("> Введите команду: pres --auto или pres --manual");
+    const input = document.createElement("input");
+    terminal.appendChild(input);
+    input.focus();
 
-    for (let line of lines) {
-        terminal.innerHTML += line + "\n";
-        await delay(800);
-    }
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            const command = input.value.trim();
+            input.remove();
 
-    showSlide1(terminal);
-    await delay(1500);
-    showSlide2(terminal);
-    await delay(1500);
-
-    terminal.innerHTML += "\nАвтоматическая презентация завершена.";
-    inputField.style.display = 'none';
-}
-
-function runManualMode() {
-    terminal.innerHTML += "Ручной режим активирован. Введите 'help' для списка команд.\n";
-    inputField.style.display = 'block';
-    inputField.focus();
-}
-
-function processCommand(command) {
-    terminal.innerHTML += "> " + command + "\n";
-
-    if (stage === 0 && command.startsWith("cmake -S presentation -B build -G Ninja -C config.cmake")) {
-        terminal.innerHTML += "Configuring project...\n";
-        terminal.innerHTML += "Generating Ninja files...\n";
-        terminal.innerHTML += "CMake configuration complete.\n";
-        stage = 1;
-        return;
-    }
-
-    if (stage === 1 && command === "cmake --build build") {
-        terminal.innerHTML += "Building project...\n";
-        stage = 2;
-        return;
-    }
-
-    if (stage === 2 && command.startsWith("cmake --install build")) {
-        terminal.innerHTML += "Installing presentation...\n";
-        stage = 3;
-
-        if (command.includes("--auto")) {
-            presentationMode = 'auto';
-            runAutoSequence();
-        } else {
-            presentationMode = 'manual';
-            runManualMode();
+            if (command === "pres --auto") {
+                mode = "auto";
+                startBuildProcess();
+            } else if (command === "pres --manual") {
+                mode = "manual";
+                startBuildProcess();
+            } else {
+                print("❌ Ошибка: Неизвестная команда.");
+                askMode();
+            }
         }
-        return;
-    }
-
-    if (presentationMode === 'manual') {
-        switch (command.toLowerCase()) {
-            case 'help':
-                terminal.innerHTML += "Доступные команды:\n";
-                terminal.innerHTML += "  slide1  - Показать слайд 1\n";
-                terminal.innerHTML += "  slide2  - Показать слайд 2\n";
-                terminal.innerHTML += "  exit    - Завершить презентацию\n";
-                break;
-            case 'slide1':
-                terminal.innerHTML += "Переход к слайду 1...\n";
-                showSlide1(terminal);
-                break;
-            case 'slide2':
-                terminal.innerHTML += "Переход к слайду 2...\n";
-                showSlide2(terminal);
-                break;
-            case 'exit':
-                terminal.innerHTML += "Завершение презентации...\n";
-                inputField.disabled = true;
-                break;
-            default:
-                terminal.innerHTML += "Неизвестная команда. Введите 'help'.\n";
-        }
-        return;
-    }
-
-    terminal.innerHTML += "Ошибка: неверный порядок команд или синтаксис.\n";
+    });
 }
 
-inputField.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        processCommand(inputField.value.trim());
-        inputField.value = "";
+// Симуляция команд сборки
+function startBuildProcess() {
+    print("> cmake -S llvm -B release/build -G Ninja -C release.cmake");
+    setTimeout(() => {
+        print("> cmake --build release/build");
+        setTimeout(() => {
+            print("> cmake --install release/build");
+            setTimeout(() => {
+                print("✅ Сборка завершена!");
+                if (mode === "auto") {
+                    loadSlide();
+                } else {
+                    enableManualMode();
+                }
+            }, 1000);
+        }, 1000);
+    }, 1000);
+}
+
+// Загрузка слайдов
+function loadSlide() {
+    if (currentSlide >= slides.length) {
+        print("🎉 Презентация завершена!");
+        return;
     }
-});
+
+    print(`📄 Загрузка слайда ${currentSlide + 1}`);
+    import (`./slides/${slides[currentSlide]}`).then((module) => {
+        module.renderSlide();
+    });
+
+    if (mode === "auto") {
+        document.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            nextSlide();
+        });
+    }
+}
+
+// Переключение слайда
+function nextSlide() {
+    currentSlide++;
+    loadSlide();
+}
+
+// Включение режима `manual`
+function enableManualMode() {
+    print("> Введите `pres --help` для списка команд");
+    const input = document.createElement("input");
+    terminal.appendChild(input);
+    input.focus();
+
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            const command = input.value.trim();
+            input.remove();
+
+            if (command === "pres --help") {
+                print("🔹 Доступные команды:");
+                print("  - pres --goto slideX (перейти к слайду X)");
+                print("  - pres --exit (выйти из презентации)");
+            } else if (command.startsWith("pres --goto")) {
+                let slideNum = parseInt(command.split(" ")[1].replace("slide", ""));
+                if (!isNaN(slideNum) && slideNum > 0 && slideNum <= slides.length) {
+                    currentSlide = slideNum - 1;
+                    loadSlide();
+                } else {
+                    print("❌ Ошибка: Неверный номер слайда.");
+                }
+            } else if (command === "pres --exit") {
+                print("👋 Завершение...");
+            } else {
+                print("❌ Ошибка: Неизвестная команда.");
+            }
+
+            enableManualMode();
+        }
+    });
+}
+
+// Запуск программы
+askMode();
