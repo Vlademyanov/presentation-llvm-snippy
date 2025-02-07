@@ -3,7 +3,7 @@ const username = "user";
 const hostname = "presentation-pc";
 let mode = null;
 let currentSlide = 0;
-let slides = ["slide1.js", "slide2.js", "slide3.js"];
+let slides = ["slide1.png", "slide2.png", "slide3.png"];
 
 // Функция вывода текста в терминале
 function print(text, newLine = true) {
@@ -60,17 +60,25 @@ function startBuildProcess() {
     }, 1000);
 }
 
-// Загрузка ASCII-слайда
+// Загрузка слайда
 function loadSlide() {
     if (currentSlide >= slides.length) {
-        print("🎉 Presentation finished!");
+        print("Presentation finished!");
         return;
     }
 
     print(getPrompt() + `cat slides/${slides[currentSlide]}`);
-    import (`./slides/${slides[currentSlide]}`).then((module) => {
-        print(module.renderSlide());
-    });
+
+    // Создаём контейнер для изображения
+    const slideContainer = document.createElement("div");
+    slideContainer.classList.add("slide-container");
+
+    const img = document.createElement("img");
+    img.src = `slides/${slides[currentSlide]}`;
+    img.alt = `Slide ${currentSlide + 1}`;
+
+    slideContainer.appendChild(img);
+    terminal.appendChild(slideContainer);
 
     if (mode === "auto") {
         document.addEventListener("contextmenu", (e) => {
@@ -99,7 +107,7 @@ function enableManualMode() {
             input.remove();
 
             if (command === "pres --help") {
-                print("🔹 Available commands:");
+                print("Available commands:");
                 print("  - pres --goto slideX (go to slide X)");
                 print("  - pres --exit (exit presentation)");
             } else if (command.startsWith("pres --goto")) {
@@ -111,7 +119,7 @@ function enableManualMode() {
                     print("Error: Invalid slide number.");
                 }
             } else if (command === "pres --exit") {
-                print("👋 Exiting...");
+                print("Exiting...");
             } else {
                 print("bash: command not found: " + command);
             }
